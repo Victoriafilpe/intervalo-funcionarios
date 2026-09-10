@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Intervalo Funcionários</title>
+<style>
+  :root{
+    --bg:#111;
+    --card:#1d1d1d;
+    --text:#fff;
+    --muted:#b8b8b8;
+    --accent:#e31b23;
+    --ok:#19b66a;
+    --warn:#ffb020;
+    --bad:#ff4d4f;
+    --border:#333;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;
+    background:var(--bg);
+    color:var(--text);
+    padding:16px;
+  }
+  .wrap{max-width:520px;margin:0 auto}
+  header{
+    text-align:center;
+    padding:14px 8px 18px;
+  }
+  h1{margin:0;font-size:24px}
+  .sub{color:var(--muted);font-size:14px;margin-top:6px}
+  .card{
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:18px;
+    padding:14px;
+    margin-bottom:14px;
+    box-shadow:0 6px 18px rgba(0,0,0,.25);
+  }
+  label{display:block;color:var(--muted);font-size:13px;margin-bottom:6px}
+  input,select,button{
+    width:100%;
+    border:0;
+    border-radius:14px;
+    padding:13px;
+    font-size:16px;
+  }
+  input,select{
+    background:#2a2a2a;
+    color:#fff;
+    border:1px solid #3b3b3b;
+  }
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .btn{
+    background:var(--accent);
+    color:#fff;
+    font-weight:700;
+    cursor:pointer;
+    margin-top:10px;
+  }
+  .btn2{background:#333}
+  .btn3{background:var(--ok)}
+  .btn4{background:#555}
+  .danger{background:var(--bad)}
+  .row{
+    display:grid;
+    grid-template-columns:1fr auto;
+    gap:10px;
+    align-items:center;
+    border-top:1px solid #333;
+    padding:12px 0;
+  }
+  .row:first-child{border-top:0}
+  .name{font-size:18px;font-weight:800}
+  .info{font-size:14px;color:var(--muted);line-height:1.45}
+  .status{
+    font-weight:800;
+    padding:8px 10px;
+    border-radius:999px;
+    font-size:13px;
+    text-align:center;
+    min-width:86px;
+  }
+  .ok{background:rgba(25,182,106,.18);color:#4be693}
+  .wait{background:rgba(255,176,32,.18);color:#ffd27a}
+  .late{background:rgba(255,77,79,.18);color:#ff8a8c}
+  .done{background:rgba(255,255,255,.12);color:#ddd}
+  .actions{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:8px}
+  .mini{padding:10px;font-size:14px;margin:0}
+  textarea{
+    width:100%;
+    min-height:120px;
+    background:#222;
+    color:#fff;
+    border:1px solid #333;
+    border-radius:14px;
+    padding:12px;
+    font-size:14px;
+  }
+  .small{font-size:12px;color:var(--muted);text-align:center;margin-top:10px}
+  .add-funcionario{
+    display:grid;
+    grid-template-columns:1fr auto;
+    gap:10px;
+    margin-top:10px;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>⏱️ Controle de Intervalo</h1>
+  <div class="sub">Intervalo padrão: 30 minutos</div>
+</header>
+
+<div class="card">
+  <label>Funcionário</label>
+  <select id="nome">
+    <option>Gean</option>
+    <option>Jean</option>
+    <option>Vinicius</option>
+    <option>Léo</option>
+    <option>Lucas</option>
+    <option>Wesley</option>
+    <option>Cássia</option>
+    <option>Velho</option>
+    <option>Gustavo</option>
+    <option>Marcelo</option>
+    <option>Artur</option>
+    <option>Rafa</option>
+    <option>Henrique</option>
+    <option>Erick</option>
+  </select>
+
+  <div class="add-funcionario">
+    <input id="novoFuncionario" type="text" placeholder="Nome do novo funcionário">
+    <button class="btn btn3 mini" onclick="adicionarFuncionario()" style="margin-top:0">Adicionar</button>
+  </div>
+
+  <div class="grid" style="margin-top:10px">
+    <div>
+      <label>Saída</label>
+      <input id="saida" type="time">
+    </div>
+    <div>
+      <label>Minutos</label>
+      <input id="minutos" type="number" value="30" min="1">
+    </div>
+  </div>
+
+  <button class="btn" onclick="registrarSaida()">Marcar saída</button>
+  <button class="btn btn2" onclick="usarAgora()">Usar horário de agora</button>
+</div>
+
+<div class="card">
+  <h2 style="margin:0 0 10px;font-size:19px">Intervalos de hoje</h2>
+  <div id="lista"></div>
+</div>
+
+<div class="card">
+  <h2 style="margin:0 0 10px;font-size:19px">Resumo para WhatsApp</h2>
+  <textarea id="resumo" readonly></textarea>
+  <button class="btn btn3" onclick="copiarResumo()">Copiar resumo</button>
+  <button class="btn" onclick="enviarWhatsApp()">Enviar WhatsApp</button>
+  <button class="btn danger" onclick="limparTudo()">Limpar tudo</button>
+  <div class="small">Para instalar no iPhone: Safari → compartilhar → Adicionar à Tela de Início.</div>
+</div>
+</div>
+
+<script>
+const KEY = "controle_intervalo_dog_marcelo";
+const FUNC_KEY = "lista_funcionarios_dog_marcelo";
+
+// Funcionários padrão
+const funcionariosPadrao = [
+  "Gean", "Jean", "Vinicius", "Léo", "Lucas", "Wesley",
+  "Cássia", "Velho", "Gustavo", "Marcelo", "Artur", "Rafa",
+  "Henrique", "Erick"
+];
+
+let registros = JSON.parse(localStorage.getItem(KEY) || "[]");
+let funcionarios = JSON.parse(localStorage.getItem(FUNC_KEY) || "null") || funcionariosPadrao;
+
+function pad(n){return String(n).padStart(2,"0")}
+function nowHHMM(){
+  const d = new Date();
+  return pad(d.getHours()) + ":" + pad(d.getMinutes());
+}
+function addMin(hhmm, min){
+  const [h,m] = hhmm.split(":").map(Number);
+  const d = new Date();
+  d.setHours(h,m,0,0);
+  d.setMinutes(d.getMinutes()+Number(min));
+  return pad(d.getHours()) + ":" + pad(d.getMinutes());
+}
+function diffMin(a,b){
+  const [h1,m1]=a.split(":").map(Number);
+  const [h2,m2]=b.split(":").map(Number);
+  let t1=h1*60+m1, t2=h2*60+m2;
+  if(t2<t1) t2 += 1440;
+  return t2-t1;
+}
+function salvar(){
+  localStorage.setItem(KEY, JSON.stringify(registros));
+  render();
+}
+function salvarFuncionarios(){
+  localStorage.setItem(FUNC_KEY, JSON.stringify(funcionarios));
+  renderSelectFuncionarios();
+}
+function renderSelectFuncionarios(){
+  const select = document.getElementById("nome");
+  const valorAtual = select.value;
+  select.innerHTML = funcionarios.map(f => `<option>${f}</option>`).join("");
+  if (funcionarios.includes(valorAtual)) {
+    select.value = valorAtual;
+  }
+}
+function adicionarFuncionario(){
+  const input = document.getElementById("novoFuncionario");
+  const nome = input.value.trim();
+  if (!nome) {
+    alert("Digite o nome do funcionário.");
+    return;
+  }
+  if (funcionarios.includes(nome)) {
+    alert("Este funcionário já está na lista.");
+    return;
+  }
+  funcionarios.push(nome);
+  salvarFuncionarios();
+  input.value = "";
+  document.getElementById("nome").value = nome;
+  alert(`Funcionário "${nome}" adicionado!`);
+}
+function usarAgora(){
+  document.getElementById("saida").value = nowHHMM();
+}
+function registrarSaida(){
+  const nome = document.getElementById("nome").value;
+  const saida = document.getElementById("saida").value || nowHHMM();
+  const minutos = Number(document.getElementById("minutos").value || 30);
+  registros.unshift({
+    id: Date.now(),
+    nome,
+    saida,
+    previsto: addMin(saida,minutos),
+    volta: "",
+    minutos
+  });
+  document.getElementById("saida").value = "";
+  salvar();
+}
+function marcarVolta(id){
+  const r = registros.find(x=>x.id===id);
+  if(!r) return;
+  r.volta = nowHHMM();
+  salvar();
+}
+function editarVolta(id){
+  const r = registros.find(x=>x.id===id);
+  if(!r) return;
+  const v = prompt("Digite o horário de volta:", r.volta || nowHHMM());
+  if(v){ r.volta = v; salvar(); }
+}
+function remover(id){
+  if(confirm("Apagar este registro?")){
+    registros = registros.filter(x=>x.id!==id);
+    salvar();
+  }
+}
+function status(r){
+  if(r.volta){
+    const tempo = diffMin(r.saida,r.volta);
+    if(tempo <= r.minutos) return `<span class="status ok">✅ ${tempo} min</span>`;
+    return `<span class="status late">⚠️ ${tempo} min</span>`;
+  }
+  const agora = nowHHMM();
+  const passou = diffMin(r.saida, agora) > r.minutos;
+  return passou ? `<span class="status late">Atrasou</span>` : `<span class="status wait">Aguardando</span>`;
+}
+function render(){
+  const lista = document.getElementById("lista");
+  if(registros.length === 0){
+    lista.innerHTML = `<div class="info">Nenhum intervalo marcado ainda.</div>`;
+  } else {
+    lista.innerHTML = registros.map(r=>`
+      <div class="row">
+        <div>
+          <div class="name">${r.nome}</div>
+          <div class="info">
+            Saída: <b>${r.saida}</b><br>
+            Volta prevista: <b>${r.previsto}</b><br>
+            Volta real: <b>${r.volta || "____"}</b>
+          </div>
+          <div class="actions">
+            <button class="btn mini btn3" onclick="marcarVolta(${r.id})">Voltou agora</button>
+            <button class="btn mini btn4" onclick="editarVolta(${r.id})">Editar volta</button>
+            <button class="btn mini danger" onclick="remover(${r.id})">Apagar</button>
+          </div>
+        </div>
+        <div>${status(r)}</div>
+      </div>
+    `).join("");
+  }
+
+  // Monta resumo
+  let resumoTexto = "📋 CONTROLE DE INTERVALO\n";
+  resumoTexto += "━━━━━━━━━━━━━━━━━━━━\n\n";
+
+  registros.slice().reverse().forEach(r=>{
+    const tempo = r.volta ? diffMin(r.saida,r.volta) : null;
+    let statusEmoji = "";
+    if (r.volta) {
+      statusEmoji = tempo <= r.minutos ? "✅" : "⚠️";
+    } else {
+      const agora = nowHHMM();
+      const passou = diffMin(r.saida, agora) > r.minutos;
+      statusEmoji = passou ? "🔴" : "⏳";
+    }
+    resumoTexto += `${statusEmoji} ${r.nome}\n`;
+    resumoTexto += `   Saída: ${r.saida} | Prevista: ${r.previsto}\n`;
+    resumoTexto += `   Volta: ${r.volta || "____"}`;
+    if (tempo !== null) resumoTexto += ` (${tempo} min)`;
+    resumoTexto += "\n\n";
+  });
+
+  document.getElementById("resumo").value = resumoTexto.trim();
+}
+function copiarResumo(){
+  const t = document.getElementById("resumo");
+  t.select();
+  t.setSelectionRange(0, 99999);
+  try {
+    document.execCommand("copy");
+    alert("Resumo copiado!");
+  } catch(e) {
+    navigator.clipboard.writeText(t.value).then(()=>{
+      alert("Resumo copiado!");
+    }).catch(()=>{
+      alert("Não foi possível copiar. Selecione e copie manualmente.");
+    });
+  }
+}
+function enviarWhatsApp(){
+  const texto = document.getElementById("resumo").value;
+  if(!texto.trim()){
+    alert("Não tem resumo para enviar.");
+    return;
+  }
+  const url = "https://wa.me/?text=" + encodeURIComponent(texto);
+  window.open(url, "_blank");
+}
+function limparTudo(){
+  if(confirm("Apagar todos os registros de hoje?")){
+    registros = [];
+    salvar();
+  }
+}
+
+// Inicializa
+renderSelectFuncionarios();
+render();
+setInterval(render, 30000);
+</script>
+</body>
+</html>
